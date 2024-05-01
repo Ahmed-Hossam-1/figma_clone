@@ -87,13 +87,13 @@ const RenderSelect = ({
 }: Props) => (
   <Select
     key={config.property}
-    onValueChange={(value) => handleInputChange(config.property, value)}
+    onValueChange={(value: any) => handleInputChange(config.property, value)}
     value={
       config.property === "fontFamily"
         ? fontFamily
         : config.property === "fontSize"
-          ? fontSize
-          : fontWeight
+        ? fontSize
+        : fontWeight
     }
   >
     <SelectTrigger className='no-ring w-full rounded-sm border border-primary-grey-200'>
@@ -102,8 +102,8 @@ const RenderSelect = ({
           config.property === "fontFamily"
             ? "Choose a font"
             : config.property === "fontSize"
-              ? "30"
-              : "Semibold"
+            ? "30"
+            : "Semibold"
         }
       />
     </SelectTrigger>

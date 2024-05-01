@@ -13,13 +13,14 @@ import {
   handleCanvasMouseUp,
   handleCanvasObjectModified,
   handleCanvasObjectMoving,
+  handleCanvasObjectScaling,
   handleCanvasSelectionCreated,
   handlePathCreated,
   handleResize,
   initializeFabric,
   renderCanvas,
 } from "@/lib/canvas";
-import { ActiveElement } from "@/types/type";
+import { ActiveElement, Attributes } from "@/types/type";
 import {
   useMutation,
   useRedo,
@@ -41,6 +42,17 @@ export default function Page() {
   const activeObjectRef = useRef<fabric.Object | null>(null);
   const selectedShapeRef = useRef<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const isEditingRef = useRef(false);
+
+  const [elementAttributes, setElementAttributes] = useState<Attributes>({
+    width: "",
+    height: "",
+    fontSize: "",
+    fontFamily: "",
+    fontWeight: "",
+    fill: "#aabbcc",
+    stroke: "#aabbcc",
+  });
 
   const canvasObjects = useStorage((root) => root.canvasObjects);
 
@@ -67,7 +79,9 @@ export default function Page() {
 
     if (!canvasObjects || canvasObjects.size === 0) return true;
 
-    for (const [key, value] of canvasObjects.entries()) {
+    const entries = Array.from(canvasObjects.entries());
+
+    for (const [key, value] of entries) {
       canvasObjects.delete(key);
     }
 
@@ -154,12 +168,12 @@ export default function Page() {
       });
     });
 
-    // canvas.on("path:created", (options) => {
-    //   handlePathCreated({
-    //     options,
-    //     syncShapeInStorage,
-    //   });
-    // });
+    canvas.on("path:created", (options) => {
+      handlePathCreated({
+        options,
+        syncShapeInStorage,
+      });
+    });
 
     canvas?.on("object:moving", (options) => {
       handleCanvasObjectMoving({
@@ -167,13 +181,20 @@ export default function Page() {
       });
     });
 
-    // canvas.on("selection:created", (options) => {
-    //   handleCanvasSelectionCreated({
-    //     options,
-    //     isEditingRef,
-    //     setElementAttributes,
-    //   });
-    // });
+    canvas.on("selection:created", (options) => {
+      handleCanvasSelectionCreated({
+        options,
+        isEditingRef,
+        setElementAttributes,
+      });
+    });
+
+    canvas.on("object:scaling", (options) => {
+      handleCanvasObjectScaling({
+        options,
+        setElementAttributes,
+      });
+    });
 
     window.addEventListener("resize", () => {
       handleResize({
@@ -241,8 +262,15 @@ export default function Page() {
       />
       <section className='flex h-full flex-row'>
         <LeftSidebar allShapes={Array.from(canvasObjects)} />
-        <Live canvasRef={canvasRef} />
-        <RightSidebar />
+        <Live canvasRef={canvasRef} undo={undo} redo={redo} />
+        <RightSidebar
+          elementAttributes={elementAttributes}
+          setElementAttributes={setElementAttributes}
+          fabricRef={fabricRef}
+          isEditingRef={isEditingRef}
+          activeObjectRef={activeObjectRef}
+          syncShapeInStorage={syncShapeInStorage}
+        />
       </section>
     </main>
   );

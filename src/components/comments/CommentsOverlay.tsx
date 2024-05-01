@@ -21,6 +21,7 @@ type OverlayThreadProps = {
 export const CommentsOverlay = () => {
   const { threads } = useThreads();
 
+  // get the max z-index of a thread
   const maxZIndex = useMaxZIndex();
 
   return (
@@ -40,9 +41,8 @@ export const CommentsOverlay = () => {
 
 const OverlayThread = ({ thread, maxZIndex }: OverlayThreadProps) => {
   const editThreadMetadata = useEditThreadMetadata();
-
-  const { isLoading } = useUser(thread.comments[0].userId);
-
+  // const { isLoading, user } = useUser(thread?.comments[0]?.userId);
+  // console.log(user, "ussssssssssssssssssssser");
   const threadRef = useRef<HTMLDivElement>(null);
 
   const handleIncreaseZIndex = useCallback(() => {
@@ -58,9 +58,9 @@ const OverlayThread = ({ thread, maxZIndex }: OverlayThreadProps) => {
     });
   }, [thread, editThreadMetadata, maxZIndex]);
 
-  if (isLoading) {
-    return null;
-  }
+  // if (isLoading) {
+  //   return <div>Loading...</div>;
+  // }
 
   return (
     <div
