@@ -20,11 +20,20 @@ import {
   renderCanvas,
 } from "@/lib/canvas";
 import { ActiveElement } from "@/types/type";
-import { useMutation, useStorage } from "../../liveblocks.config";
+import {
+  useMutation,
+  useRedo,
+  useStorage,
+  useUndo,
+} from "../../liveblocks.config";
 import { defaultNavElement } from "@/constants";
 import { handleDelete, handleKeyDown } from "@/lib/key-events";
+import { handleImageUpload } from "@/lib/shapes";
 
 export default function Page() {
+  const undo = useUndo();
+  const redo = useRedo();
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<fabric.Canvas | null>(null);
   const isDrawing = useRef(false);
@@ -87,9 +96,7 @@ export default function Page() {
 
       case "image":
         imageInputRef.current?.click();
-
         isDrawing.current = false;
-
         if (fabricRef.current) {
           fabricRef.current.isDrawingMode = false;
         }
@@ -174,8 +181,36 @@ export default function Page() {
       });
     });
 
+    window.addEventListener("keydown", (e) =>
+      handleKeyDown({
+        e,
+        canvas: fabricRef.current,
+        undo,
+        redo,
+        syncShapeInStorage,
+        deleteShapeFromStorage,
+      })
+    );
+
     return () => {
       canvas.dispose();
+
+      window.removeEventListener("resize", () => {
+        handleResize({
+          canvas: null,
+        });
+      });
+
+      window.removeEventListener("keydown", (e) =>
+        handleKeyDown({
+          e,
+          canvas: fabricRef.current,
+          undo,
+          redo,
+          syncShapeInStorage,
+          deleteShapeFromStorage,
+        })
+      );
     };
   }, []);
 
@@ -192,9 +227,20 @@ export default function Page() {
       <NavBar
         activeElement={activeElement}
         handleActiveElement={handleActiveElement}
+        imageInputRef={imageInputRef}
+        handleImageUpload={(e: any) => {
+          e.stopPropagation();
+
+          handleImageUpload({
+            file: e.target.files[0],
+            canvas: fabricRef as any,
+            shapeRef,
+            syncShapeInStorage,
+          });
+        }}
       />
       <section className='flex h-full flex-row'>
-        <LeftSidebar />
+        <LeftSidebar allShapes={Array.from(canvasObjects)} />
         <Live canvasRef={canvasRef} />
         <RightSidebar />
       </section>
